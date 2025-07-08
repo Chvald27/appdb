@@ -1,9 +1,9 @@
-name: PostgreSQL Service Container with Restore
+name: PostgreSQL Service Container with Restore and Flask Test
 
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   test:
@@ -15,11 +15,11 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_DB: webappdb 
+          POSTGRES_DB: webappdb
           POSTGRES_USER: testuser
           POSTGRES_PASSWORD: testpass
         options: >-
-          --health-cmd="pg_isready -U postgres"
+          --health-cmd="pg_isready -U testuser"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -52,11 +52,16 @@ jobs:
             -h $DATABASE_HOST -U $DATABASE_USER -d $DATABASE_NAME \
             -f backup_webappdb.sql
 
-      - name: Start application
+      - name: Start Flask app in background
         run: |
           export DATABASE_URL=postgresql://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME
-          python run.py
+          nohup python run.py > flask.log 2>&1 &
+          sleep 5
 
-      - name: Test app is running
+      - name: Test health check route
         run: |
-          curl http://127.0.0.1:8081/ping
+          curl -f http://127.0.0.1:8081/ping
+
+      - name: Show Flask logs (optional)
+        run: cat flask.log
+
