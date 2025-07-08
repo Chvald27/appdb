@@ -1,0 +1,60 @@
+name: PostgreSQL Service Container with Restore
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: webappdb 
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: DevOps2024*
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: webappdb
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: DevOps2024*
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Restore PostgreSQL schema and data
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          PGPASSWORD=$DATABASE_PASSWORD psql \
+            -h $DATABASE_HOST -U $DATABASE_USER -d $DATABASE_NAME \
+            -f backup_webappdb.sql
+
+      - name: Run database-dependent tests
+        working-directory: appdb
+        run: |
+          export DATABASE_URL=postgresql://postgres:DevOps2024*@localhost:5432/webappdb
+          python run.py
+
