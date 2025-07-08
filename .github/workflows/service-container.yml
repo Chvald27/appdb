@@ -16,8 +16,8 @@ jobs:
           - 5432:5432
         env:
           POSTGRES_DB: webappdb 
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: DevOps2024*
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
         options: >-
           --health-cmd="pg_isready -U postgres"
           --health-interval=10s
@@ -28,8 +28,8 @@ jobs:
       DATABASE_HOST: localhost
       DATABASE_PORT: 5432
       DATABASE_NAME: webappdb
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: DevOps2024*
+      DATABASE_USER: testuser
+      DATABASE_PASSWORD: testpass
 
     steps:
       - name: Checkout code
@@ -52,9 +52,8 @@ jobs:
             -h $DATABASE_HOST -U $DATABASE_USER -d $DATABASE_NAME \
             -f backup_webappdb.sql
 
-      - name: Run database-dependent tests
-        working-directory: appdb
+      - name: Start application
         run: |
-          export DATABASE_URL=postgresql://postgres:DevOps2024*@localhost:5432/webappdb
+          export DATABASE_URL=postgresql://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME
           python run.py
 
