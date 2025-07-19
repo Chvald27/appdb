@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  test:
+  app-deployment:
     runs-on: ubuntu-latest
 
     services:
